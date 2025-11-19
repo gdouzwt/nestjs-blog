@@ -10,6 +10,10 @@
       <div class="meta">
         <span>📅 {{ formatDate(article.createdAt) }}</span>
         <span class="divider">|</span>
+        <span class="divider">|</span>
+        <span v-for="tag in article.tags" :key="tag.id" class="tag">
+          #{{ tag.name }}
+        </span>
         <span>🔥 {{ article.views }} 阅读</span>
       </div>
 
@@ -105,5 +109,13 @@ onMounted(async () => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+.tag {
+  background-color: #e1ecf4;
+  color: #39739d;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-right: 5px;
 }
 </style>

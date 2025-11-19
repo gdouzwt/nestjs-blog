@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index, VersionColumn } from 'typeorm';
-
+import { Tag } from '../tag/tag.entity'; // 👈 引入 Tag
+import { JoinTable, ManyToMany } from 'typeorm'; // 👈 引入装饰器
 /**
  * 面试亮点：
  * 1. 使用 UUID 主键，防止 ID 遍历，适合分布式场景。
@@ -45,4 +46,11 @@ export class Article {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // 👇👇👇 新增：多对多关系
+  // @JoinTable 必须加在关系的主导侧（通常是 Article 这一侧）
+  // cascade: true 表示保存文章时，如果 tag 不存在，会自动创建 tag，这非常方便！
+  @ManyToMany(() => Tag, (tag) => tag.articles, { cascade: true })
+  @JoinTable() 
+  tags: Tag[];
 }

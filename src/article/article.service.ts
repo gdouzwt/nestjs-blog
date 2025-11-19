@@ -20,6 +20,7 @@ export class ArticleService {
       take: limit,
       order: { createdAt: 'DESC' },
       where: { isPublished: true },
+      relations:['tags'],
       select: ['id', 'title', 'slug', 'summary', 'createdAt', 'views'],
     });
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -43,6 +44,7 @@ export class ArticleService {
     console.log(`🐢 [Redis MISS] 查数据库: ${slug}`);
     const article = await this.articleRepository.findOne({
       where: { slug },
+      relations:['tags'],
       select: ['id', 'title', 'slug', 'content', 'summary', 'createdAt', 'views', 'version'],
     });
 

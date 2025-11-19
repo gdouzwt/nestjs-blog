@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Article } from './article/article.entity';
 import { ArticleController } from './article/article.controller';
@@ -11,6 +11,7 @@ import { RedisModule } from './redis/redis.module';
 // 👇 1. 引入限流相关模块
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { Tag } from './tag/tag.entity';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { APP_GUARD } from '@nestjs/core';
       username: 'postgres', // ⚠️ 检查你的 Docker 环境变量 POSTGRES_USER
       password: 'se1124', // ⚠️ 检查你的 Docker 环境变量 POSTGRES_PASSWORD
       database: 'blog',  // ⚠️ 检查你的 Docker 环境变量 POSTGRES_DB
-      entities: [Article],
+      entities: [Article, Tag],
       synchronize: true, // ⚠️ 开发环境开启，它会自动根据 Entity 建表。生产环境要关掉！
     }),
     TypeOrmModule.forFeature([Article]) // 注册 Repository

@@ -5,7 +5,12 @@
       <h2>
         <router-link :to="'/posts/' + article.slug">{{ article.title }}</router-link>
       </h2>
-      <small>{{ formatDate(article.createdAt) }} · {{ article.views }} 阅读</small>
+      <small>{{ formatDate(article.createdAt) }} · {{ article.views }} 阅读  · </small>
+      <span class="tags-wrapper" v-if="article.tags && article.tags.length">
+          <span v-for="tag in article.tags" :key="tag.id" class="tag">
+            #{{ tag.name }}
+          </span>
+        </span>
       <p>{{ article.summary }}</p>
     </div>
     
@@ -75,6 +80,27 @@ onMounted(() => fetchArticles(1))
 </script>
 
 <style scoped>
+/* 新增样式 */
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* 时间和标签之间的间距 */
+  margin-bottom: 10px;
+}
+
+.tags-wrapper {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.tag {
+  background-color: #f1f8ff;
+  color: #0366d6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  text-decoration: none;
+}
 .article-item { margin-bottom: 40px; }
 .article-item h2 { margin-bottom: 10px; }
 .pagination { margin-top: 40px; display: flex; gap: 10px; align-items: center; }
