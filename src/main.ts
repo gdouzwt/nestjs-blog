@@ -4,9 +4,32 @@ import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 // 👇 1. 引入 Swagger 相关类
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+// 👇 1. 引入依赖
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
+import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule,
+    {
+    logger: WinstonModule.createLogger({
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.ms(),
+            // 生产环境通常用 winston.format.json()，开发环境用 nest-like 格式方便看
+            nestWinstonModuleUtilities.format.nestLike('ZwtBlog', {
+              prettyPrint: true,
+              colors: true, // 你的终端会五颜六色
+            }),
+          ),
+        }),
+        // 面试加分项：可以添加一个 File Transport 把错误日志写到文件里
+        // new winston.transports.File({ filename: 'error.log', level: 'error' }),
+      ],
+    }),
+  });
 
   // 👇👇👇 加上这一行，允许跨域访问
   app.enableCors();
@@ -31,5 +54,7 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
+  // 👇 这里的 Log 就会变成 Winston 格式
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Article } from './article.entity';
@@ -6,6 +6,10 @@ import Redis from 'ioredis'; // 👈 引入类型
 
 @Injectable()
 export class ArticleService {
+
+  // 👇 实例化一个 Logger，上下文设为当前类名
+  private readonly logger = new Logger(ArticleService.name);
+
   constructor(
     @InjectRepository(Article)
     private articleRepository: Repository<Article>,
@@ -36,12 +40,13 @@ export class ArticleService {
     const cachedData = await this.redis.get(cacheKey);
     
     if (cachedData) {
-      console.log(`🚀 [Redis HIT] 命中缓存: ${slug}`);
+      // 👇 使用 logger.log / logger.debug
+      this.logger.log(`🚀 [Cache Hit] ${slug}`);
       // Redis 存的是字符串，取出来要 JSON.parse
       return JSON.parse(cachedData);
     }
 
-    console.log(`🐢 [Redis MISS] 查数据库: ${slug}`);
+    this.logger.warn(`🐢 [Cache Miss] ${slug}`); // ⚠️ 用 warn 区分一下颜色
     const article = await this.articleRepository.findOne({
       where: { slug },
       relations:['tags'],
@@ -84,12 +89,12 @@ async search(keyword: string) {
     // 1️⃣ 🔥 先查缓存
     const cachedResult = await this.redis.get(cacheKey);
     if (cachedResult) {
-      console.log(`🚀 [Search Cache HIT] 搜索词: ${keyword}`);
+      this.logger.log(`🚀 [Search Cache HIT] 搜索词: ${keyword}`);
       return JSON.parse(cachedResult);
     }
 
     // 2️⃣ 🐢 缓存未命中，走 DB 查询 (使用 QueryBuilder)
-    console.log(`🐢 [Search Cache MISS] 查数据库: ${keyword}`);
+    this.logger.log(`🐢 [Search Cache MISS] 查数据库: ${keyword}`);
     const results = await this.articleRepository.createQueryBuilder('article')
       .where('article.isPublished = :isPublished', { isPublished: true })
       .andWhere(
