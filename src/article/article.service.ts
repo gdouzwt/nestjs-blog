@@ -59,6 +59,23 @@ export class ArticleService {
     return article;
   }
 
+
+  async search(keyword: string) {
+  // 🔍 使用 QueryBuilder 构建 SQL，比 find() 更灵活
+  // 面试亮点：这里使用了 ILIKE (Postgres 特有)，实现了不区分大小写的模糊匹配
+  return this.articleRepository.createQueryBuilder('article')
+    .where('article.isPublished = :isPublished', { isPublished: true })
+    .andWhere(
+      // 组合查询：搜标题 OR 搜摘要 (注意括号，防止逻辑错误)
+      '(article.title ILIKE :keyword OR article.summary ILIKE :keyword)', 
+      { keyword: `%${keyword}%` }
+    )
+    .orderBy('article.createdAt', 'DESC')
+    // 🚀 性能优化：只查必要的字段，绝不查 content 大字段
+    .select(['article.id', 'article.title', 'article.slug', 'article.summary', 'article.createdAt', 'article.views'])
+    .getMany();
+  }
+
   private async incrementViews(slug: string) {
     await this.articleRepository.increment({ slug }, 'views', 1);
   }

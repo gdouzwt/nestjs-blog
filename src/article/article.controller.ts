@@ -20,6 +20,16 @@ export class ArticleController {
     return this.articleService.findAll(pageNum, limitNum);
   }
 
+// 🔍 搜索接口 (一定要放在 Get(':slug') 之前 !!!)
+  @Get('search')
+  @ApiOperation({ summary: '搜索文章 (支持标题和摘要)' })
+  async search(@Query('q') q: string) {
+    if (!q || q.trim().length === 0) {
+      return [];
+    }
+    return this.articleService.search(q);
+  }
+
   // GET /articles/:slug
   // 例如：GET /articles/install-minio-on-ubuntu
   @Get(':slug')

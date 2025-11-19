@@ -18,25 +18,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { format } from 'date-fns'
+import { useRoute } from 'vue-router'
 
 const articles = ref<any[]>([])
 const loading = ref(true)
 const page = ref(1)
 const totalPages = ref(1)
+const route = useRoute()
 
 const fetchArticles = async (p: number) => {
   loading.value = true
   try {
-    // ⚠️ 这里请求你的 NestJS 后端
-    const res = await axios.get(`http://localhost:3000/articles?page=${p}&limit=5`)
-    // 修改为：
-    const responseData = res.data.data; // ✅ 取出包裹在里面的 data
-    articles.value = responseData.items
-    totalPages.value = responseData.totalPages
-    page.value = responseData.page
+    const searchQuery = route.query.q
+    
+    let url = ''
+    // 🔄 分支逻辑：有 q 参数就搜，没有就查列表
+    if (searchQuery) {
+      console.log('正在搜索:', searchQuery)
+      url = `http://localhost:3000/articles/search?q=${searchQuery}`
+    } else {
+      url = `http://localhost:3000/articles?page=${p}&limit=5`
+    }
+
+    const res = await axios.get(url)
+    
+    // 搜索接口返回的是数组，分页接口返回的是 { items: [] }，这里要做个兼容
+    if (searchQuery) {
+      articles.value = res.data.data // 搜索结果直接是数组
+      totalPages.value = 1 // 搜索暂不做分页
+      page.value = 1
+    } else {
+      const responseData = res.data.data
+      articles.value = responseData.items
+      totalPages.value = responseData.totalPages
+      page.value = responseData.page
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -46,6 +65,11 @@ const fetchArticles = async (p: number) => {
 
 const changePage = (p: number) => fetchArticles(p)
 const formatDate = (date: string) => format(new Date(date), 'yyyy-MM-dd')
+
+// 监听路由参数变化（比如从普通列表切换到搜索结果）
+watch(() => route.query, () => {
+  fetchArticles(1)
+})
 
 onMounted(() => fetchArticles(1))
 </script>
