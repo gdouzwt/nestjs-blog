@@ -20,6 +20,8 @@ async function bootstrap() {
     .setDescription('基于 NestJS + TypeORM + Redis 的高并发博客系统 API')
     .setVersion('1.0')
     .addTag('articles', '文章管理模块')
+    // 👇👇👇 新增这一行：开启 Bearer Token 认证支持
+    .addBearerAuth()
     .build();
   
   // 👇 3. 创建文档

@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { ArticleService } from './article/article.service';
 // 👇 1. 引入刚才新建的模块
 import { RedisModule } from './redis/redis.module';
+import { AuthModule } from './auth/auth.module';
 
 // 👇 1. 引入限流相关模块
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -18,7 +19,7 @@ import { Tag } from './tag/tag.entity';
 
 // 👇 2. 必须在这里注册！这就是之前报错的原因：可能定义了但没引进来
     RedisModule,
-
+    AuthModule,
     // 👇 2. 配置限流规则
     ThrottlerModule.forRoot([{
       ttl: 60000, // 时间窗口：60秒 (单位是毫秒)

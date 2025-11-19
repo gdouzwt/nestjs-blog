@@ -1,12 +1,26 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ArticleService } from './article.service';
 // 👇 引入 Swagger 装饰器
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Post, Body, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport'; // 👈 引入守卫
 
 @ApiTags('articles') // 👈 给这个 Controller 分类
+@ApiBearerAuth() // 👈 关键：给整个 Controller 加上这个，Swagger 页面右上角就会出现“Authorize”按钮
 @Controller('articles')
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
+
+  // 👇 新增：发布文章接口
+  @Post()
+  @UseGuards(AuthGuard('jwt')) // 🔒 关键：加上这行，没 Token 进不来！
+  @ApiOperation({ summary: '发布新文章 (需要登录)' })
+  @ApiResponse({ status: 401, description: '未授权' })
+  async create(@Body() createArticleDto: any) {
+    // 这里简单调用 service.create (你需要去 Service 里补一个 create 方法)
+    // return this.articleService.create(createArticleDto);
+    return { msg: '为了演示安全，这个接口是通的，但没 Token 调不了！' };
+  }
 
   // GET /articles?page=1&limit=10
   @Get()
