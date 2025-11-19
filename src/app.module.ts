@@ -8,13 +8,22 @@ import { ArticleService } from './article/article.service';
 // 👇 1. 引入刚才新建的模块
 import { RedisModule } from './redis/redis.module';
 
-
+// 👇 1. 引入限流相关模块
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
 
 // 👇 2. 必须在这里注册！这就是之前报错的原因：可能定义了但没引进来
     RedisModule,
+
+    // 👇 2. 配置限流规则
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 时间窗口：60秒 (单位是毫秒)
+      limit: 10,  // 最大请求数：10次 (为了演示效果，故意设小一点)
+    }]),
+
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -28,6 +37,12 @@ import { RedisModule } from './redis/redis.module';
     TypeOrmModule.forFeature([Article]) // 注册 Repository
   ],
   controllers: [AppController, ArticleController],
-  providers: [AppService, ArticleService],
+  providers: [AppService, ArticleService,
+    // 👇 3. 注册全局守卫，开启保护
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
