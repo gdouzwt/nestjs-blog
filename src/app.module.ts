@@ -28,13 +28,14 @@ import { Tag } from './tag/tag.entity';
 
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres', // ⚠️ 检查你的 Docker 环境变量 POSTGRES_USER
-      password: 'se1124', // ⚠️ 检查你的 Docker 环境变量 POSTGRES_PASSWORD
-      database: 'blog',  // ⚠️ 检查你的 Docker 环境变量 POSTGRES_DB
+// 👇 关键修改：支持环境变量
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT) || 5432,
+      username: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'se1124',
+      database: process.env.DB_NAME || 'blog',
       entities: [Article, Tag],
-      synchronize: true, // ⚠️ 开发环境开启，它会自动根据 Entity 建表。生产环境要关掉！
+      synchronize: true, // 生产环境建议关掉，但在 Demo 里开启方便
     }),
     TypeOrmModule.forFeature([Article]) // 注册 Repository
   ],

@@ -1,0 +1,52 @@
+services:
+  # 🐘 数据库服务
+  postgres:
+    image: postgres:18-alpine
+    container_name: blog-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: se1124
+      POSTGRES_DB: blog
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - blog-network
+
+  # 🚀 缓存服务
+  redis:
+    image: redis:alpine
+    container_name: blog-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - blog-network
+
+  # ⚡️ 你的 NestJS 后端
+  blog-backend:
+    build: .              # 告诉它：Dockerfile 就在当前目录
+    container_name: blog-backend
+    ports:
+      - "3000:3000"       # 宿主机 3000 -> 容器 3000
+    environment:
+      - DB_HOST=postgres  # ⚠️ 这里填的是上面服务的名字！不是 localhost
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=se1124
+      - DB_NAME=blog_db
+      - REDIS_HOST=redis  # ⚠️ 同理，这里填 redis 服务名
+      - REDIS_PORT=6379
+    depends_on:           # 确保 DB 和 Redis 先启动，后端再启动
+      - postgres
+      - redis
+    networks:
+      - blog-network
+
+# 定义网络，让它们能互通
+networks:
+  blog-network:
+    driver: bridge
+
+volumes:
+  pgdata:

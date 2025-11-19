@@ -8,8 +8,9 @@ import Redis from 'ioredis';
       provide: 'REDIS_CLIENT',
       useFactory: () => {
         return new Redis({
-          host: 'localhost',
-          port: 6379,
+          // 👇 优先读环境变量，否则回退到 localhost
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT) || 6379,
         });
       },
     },
