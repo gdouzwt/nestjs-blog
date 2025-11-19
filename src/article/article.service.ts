@@ -60,21 +60,52 @@ export class ArticleService {
   }
 
 
-  async search(keyword: string) {
-  // 🔍 使用 QueryBuilder 构建 SQL，比 find() 更灵活
-  // 面试亮点：这里使用了 ILIKE (Postgres 特有)，实现了不区分大小写的模糊匹配
-  return this.articleRepository.createQueryBuilder('article')
-    .where('article.isPublished = :isPublished', { isPublished: true })
-    .andWhere(
-      // 组合查询：搜标题 OR 搜摘要 (注意括号，防止逻辑错误)
-      '(article.title ILIKE :keyword OR article.summary ILIKE :keyword)', 
-      { keyword: `%${keyword}%` }
-    )
-    .orderBy('article.createdAt', 'DESC')
-    // 🚀 性能优化：只查必要的字段，绝不查 content 大字段
-    .select(['article.id', 'article.title', 'article.slug', 'article.summary', 'article.createdAt', 'article.views'])
-    .getMany();
-  }
+  // async search(keyword: string) {
+  // // 🔍 使用 QueryBuilder 构建 SQL，比 find() 更灵活
+  // // 面试亮点：这里使用了 ILIKE (Postgres 特有)，实现了不区分大小写的模糊匹配
+  // return this.articleRepository.createQueryBuilder('article')
+  //   .where('article.isPublished = :isPublished', { isPublished: true })
+  //   .andWhere(
+  //     // 组合查询：搜标题 OR 搜摘要 (注意括号，防止逻辑错误)
+  //     '(article.title ILIKE :keyword OR article.summary ILIKE :keyword)', 
+  //     { keyword: `%${keyword}%` }
+  //   )
+  //   .orderBy('article.createdAt', 'DESC')
+  //   // 🚀 性能优化：只查必要的字段，绝不查 content 大字段
+  //   .select(['article.id', 'article.title', 'article.slug', 'article.summary', 'article.createdAt', 'article.views'])
+  //   .getMany();
+  // }
+
+async search(keyword: string) {
+    const cacheKey = `search:${keyword.trim()}`;
+
+    // 1️⃣ 🔥 先查缓存
+    const cachedResult = await this.redis.get(cacheKey);
+    if (cachedResult) {
+      console.log(`🚀 [Search Cache HIT] 搜索词: ${keyword}`);
+      return JSON.parse(cachedResult);
+    }
+
+    // 2️⃣ 🐢 缓存未命中，走 DB 查询 (使用 QueryBuilder)
+    console.log(`🐢 [Search Cache MISS] 查数据库: ${keyword}`);
+    const results = await this.articleRepository.createQueryBuilder('article')
+      .where('article.isPublished = :isPublished', { isPublished: true })
+      .andWhere(
+        '(article.title ILIKE :keyword OR article.summary ILIKE :keyword)', 
+        { keyword: `%${keyword}%` }
+      )
+      .orderBy('article.createdAt', 'DESC')
+      .select(['article.id', 'article.title', 'article.slug', 'article.summary', 'article.createdAt', 'article.views'])
+      .getMany();
+
+    // 3️⃣ 💾 写入缓存
+    // ⚠️ 注意：搜索结果缓存时间不宜过长，设为 30秒 足够抵挡恶意请求，又能保证数据相对新鲜
+    if (results.length > 0) {
+       await this.redis.set(cacheKey, JSON.stringify(results), 'EX', 30);
+    }
+
+    return results;
+  } 
 
   private async incrementViews(slug: string) {
     await this.articleRepository.increment({ slug }, 'views', 1);
