@@ -44,7 +44,7 @@ onMounted(async () => {
   try {
     const slug = route.params.slug
     const res = await axios.get(`http://localhost:3000/articles/${slug}`)
-    article.value = res.data
+    article.value = res.data.data // ✅ 取出包裹在里面的 data
   } catch (e) {
     console.error("加载失败", e)
   } finally {

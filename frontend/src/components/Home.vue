@@ -32,9 +32,11 @@ const fetchArticles = async (p: number) => {
   try {
     // ⚠️ 这里请求你的 NestJS 后端
     const res = await axios.get(`http://localhost:3000/articles?page=${p}&limit=5`)
-    articles.value = res.data.items
-    totalPages.value = res.data.totalPages
-    page.value = res.data.page
+    // 修改为：
+    const responseData = res.data.data; // ✅ 取出包裹在里面的 data
+    articles.value = responseData.items
+    totalPages.value = responseData.totalPages
+    page.value = responseData.page
   } catch (e) {
     console.error(e)
   } finally {
