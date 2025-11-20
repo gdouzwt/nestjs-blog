@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Article } from './article.entity';
 import Redis from 'ioredis'; // 👈 引入类型
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ArticleService {
@@ -15,6 +17,7 @@ export class ArticleService {
     private articleRepository: Repository<Article>,
 // 👇 注入我们刚才定义的 REDIS_CLIENT
     @Inject('REDIS_CLIENT') private redis: Redis,
+    @InjectQueue('article-queue') private articleQueue: Queue,
   ) {}
 
   async findAll(page: number = 1, limit: number = 10) {
@@ -35,6 +38,10 @@ export class ArticleService {
    */
   async findOne(slug: string) {
     const cacheKey = `article:${slug}`;
+
+    // ✅ 新增：异步发送消息到队列
+    // add('jobName', { payload })
+    await this.articleQueue.add('increment-view', { slug });
 
     // 1️⃣ 直接调用 Redis get
     const cachedData = await this.redis.get(cacheKey);
@@ -60,8 +67,6 @@ export class ArticleService {
     // 2️⃣ 写入 Redis (设置过期时间 60秒)
     // 'EX' 代表秒
     await this.redis.set(cacheKey, JSON.stringify(article), 'EX', 60);
-
-    this.incrementViews(slug);
 
     return article;
   }

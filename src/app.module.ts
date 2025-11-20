@@ -8,11 +8,14 @@ import { ArticleService } from './article/article.service';
 // 👇 1. 引入刚才新建的模块
 import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
+import { BullModule } from '@nestjs/bullmq';
+import { ArticleProcessor } from './article/article.processor'; // 引入刚才写的 Worker
 
 // 👇 1. 引入限流相关模块
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { Tag } from './tag/tag.entity';
+// 👇 1. 引入 BullMQ 相关
 
 @Module({
   imports: [
@@ -23,14 +26,27 @@ import { Tag } from './tag/tag.entity';
     // 👇 2. 配置限流规则
     ThrottlerModule.forRoot([{
       ttl: 60000, // 时间窗口：60秒 (单位是毫秒)
-      limit: 10,  // 最大请求数：10次 (为了演示效果，故意设小一点)
+      limit: 100,  // 最大请求数：10次 (为了演示效果，故意设小一点)
     }]),
+
+// 👇 2. 配置 BullMQ 连接 (连你的 Valkey/Redis)
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
+    }),
+
+    // 👇 3. 注册具体的队列
+    BullModule.registerQueue({
+      name: 'article-queue',
+    }),
 
     TypeOrmModule.forRoot({
       type: 'postgres',
 // 👇 关键修改：支持环境变量
       host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
+      port: parseInt(process.env.DB_PORT || '5432'),
       username: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'se1124',
       database: process.env.DB_NAME || 'blog',
@@ -40,7 +56,7 @@ import { Tag } from './tag/tag.entity';
     TypeOrmModule.forFeature([Article]) // 注册 Repository
   ],
   controllers: [AppController, ArticleController],
-  providers: [AppService, ArticleService,
+  providers: [AppService, ArticleService, ArticleProcessor,
     // 👇 3. 注册全局守卫，开启保护
     {
       provide: APP_GUARD,

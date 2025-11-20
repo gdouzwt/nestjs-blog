@@ -10,7 +10,7 @@ import Redis from 'ioredis';
         return new Redis({
           // 👇 优先读环境变量，否则回退到 localhost
           host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT) || 6379,
+          port: parseInt(process.env.REDIS_PORT || '6379'),
         });
       },
     },
