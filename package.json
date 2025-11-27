@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm migration:generate -- -d typeorm.config.ts",
+    "migration:run": "npm run typeorm migration:run -- -d typeorm.config.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d typeorm.config.ts"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",
@@ -31,6 +35,7 @@
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
     "bullmq": "^5.63.2",
+    "dotenv": "^16.6.1",
     "gray-matter": "^4.0.3",
     "ioredis": "^5.8.2",
     "joi": "^18.0.2",
@@ -41,7 +46,6 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
-    "typeorm": "^0.3.27",
     "winston": "^3.18.3"
   },
   "devDependencies": {
@@ -67,6 +71,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typeorm": "^0.3.27",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },

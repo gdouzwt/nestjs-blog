@@ -81,7 +81,7 @@ import { Tag } from './tag/tag.entity';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [Article, Tag],
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        synchronize: false,
       }),
     }),
     TypeOrmModule.forFeature([Article]),
