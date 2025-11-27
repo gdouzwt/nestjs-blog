@@ -1,31 +1,49 @@
+# ---------------------------
 # 1. 构建阶段 (Builder)
-FROM node:25-alpine As builder
+# ---------------------------
+# 建议改用 LTS 版本 (如 22 或 24)，这里暂且保留你的 25，但面试建议提 LTS
+FROM node:lts-alpine AS builder
 
 WORKDIR /app
 
-# 先拷 package.json 利用缓存，不频繁变动依赖安装速度快
+# 设置国内镜像源 (可选，如果服务器在国内构建会快很多)
+# RUN npm config set registry https://registry.npmmirror.com
+
 COPY package*.json ./
-# 安装所有依赖 (包括 devDependencies 用于构建)
-RUN npm install
+
+# 🌟 优化点 1: 使用 npm ci 而不是 install
+# npm ci 会严格按照 package-lock.json 安装，确保版本绝对一致，这叫 "Immutable Builds"
+RUN npm ci
 
 COPY . .
-# 编译 TypeScript -> JavaScript (生成 dist 目录)
+
 RUN npm run build
 
+# ---------------------------
 # 2. 运行阶段 (Production)
-FROM node:25-alpine
+# ---------------------------
+FROM node:lts-alpine
+
+# 🌟 优化点 2: 设置时区 (解决日志少8小时问题)
+RUN apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
 WORKDIR /app
 
-# 只要生产依赖
 COPY package*.json ./
-RUN npm install --only=production
 
-# 从 builder 阶段把编译好的 dist 拷过来
+# 只安装生产依赖
+RUN npm ci --only=production && npm cache clean --force
+
+# 复制构建产物
 COPY --from=builder /app/dist ./dist
 
 # 暴露端口
 EXPOSE 3000
 
-# 启动命令
-CMD ["node", "dist/main"]
+# 🌟 优化点 3: 安全性提升 - 切换到非 root 用户
+USER node
+
+# 启动
+CMD ["node", "dist/src/main"]
