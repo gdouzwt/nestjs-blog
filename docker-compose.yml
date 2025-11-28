@@ -63,6 +63,7 @@ services:
 networks:
   blog-network:
     driver: bridge
+    name: blog-network
 
 volumes:
   pgdata:
