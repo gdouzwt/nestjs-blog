@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 // 👇 引入拦截器
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 // 👇 1. 引入 Swagger 相关类
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 // 👇 1. 引入依赖
@@ -39,7 +40,7 @@ async function bootstrap() {
   app.enableCors();
 
   // 👇 注册全局拦截器
-  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(new TransformInterceptor(), new LoggingInterceptor());
 
   // 👇 2. 配置 Swagger 文档信息
   const config = new DocumentBuilder()
