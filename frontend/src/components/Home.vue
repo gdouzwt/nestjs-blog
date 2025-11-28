@@ -5,15 +5,15 @@
       <h2>
         <router-link :to="'/posts/' + article.slug">{{ article.title }}</router-link>
       </h2>
-      <small>{{ formatDate(article.createdAt) }} · {{ article.views }} 阅读  · </small>
+      <small>{{ formatDate(article.createdAt) }} · {{ article.views }} 阅读 · </small>
       <span class="tags-wrapper" v-if="article.tags && article.tags.length">
-          <span v-for="tag in article.tags" :key="tag.id" class="tag">
-            #{{ tag.name }}
-          </span>
+        <span v-for="tag in article.tags" :key="tag.id" class="tag">
+          #{{ tag.name }}
         </span>
+      </span>
       <p>{{ article.summary }}</p>
     </div>
-    
+
     <div class="pagination">
       <button :disabled="page <= 1" @click="changePage(page - 1)">上一页</button>
       <span> 第 {{ page }} 页 </span>
@@ -38,18 +38,18 @@ const fetchArticles = async (p: number) => {
   loading.value = true
   try {
     const searchQuery = route.query.q
-    
+
     let url = ''
     // 🔄 分支逻辑：有 q 参数就搜，没有就查列表
     if (searchQuery) {
       console.log('正在搜索:', searchQuery)
-      url = `http://localhost:3000/articles/search?q=${searchQuery}`
+      url = `/articles/search?q=${searchQuery}`
     } else {
-      url = `http://localhost:3000/articles?page=${p}&limit=5`
+      url = `/articles?page=${p}&limit=5`
     }
 
     const res = await axios.get(url)
-    
+
     // 搜索接口返回的是数组，分页接口返回的是 { items: [] }，这里要做个兼容
     if (searchQuery) {
       articles.value = res.data.data // 搜索结果直接是数组
@@ -84,7 +84,8 @@ onMounted(() => fetchArticles(1))
 .meta-row {
   display: flex;
   align-items: center;
-  gap: 15px; /* 时间和标签之间的间距 */
+  gap: 15px;
+  /* 时间和标签之间的间距 */
   margin-bottom: 10px;
 }
 
@@ -101,9 +102,29 @@ onMounted(() => fetchArticles(1))
   font-size: 0.8em;
   text-decoration: none;
 }
-.article-item { margin-bottom: 40px; }
-.article-item h2 { margin-bottom: 10px; }
-.pagination { margin-top: 40px; display: flex; gap: 10px; align-items: center; }
-button { padding: 5px 15px; cursor: pointer; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.article-item {
+  margin-bottom: 40px;
+}
+
+.article-item h2 {
+  margin-bottom: 10px;
+}
+
+.pagination {
+  margin-top: 40px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+button {
+  padding: 5px 15px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 </style>

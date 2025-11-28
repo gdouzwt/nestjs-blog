@@ -5,8 +5,6 @@ import * as Joi from 'joi';
 
 import { Article } from './article/article.entity';
 import { ArticleController } from './article/article.controller';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ArticleService } from './article/article.service';
 import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
@@ -89,9 +87,8 @@ import { Tag } from './tag/tag.entity';
     }),
     TypeOrmModule.forFeature([Article]),
   ],
-  controllers: [AppController, ArticleController],
+  controllers: [ArticleController],
   providers: [
-    AppService,
     ArticleService,
     ArticleProcessor,
     {
@@ -100,4 +97,4 @@ import { Tag } from './tag/tag.entity';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

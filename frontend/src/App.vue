@@ -2,21 +2,16 @@
   <div class="container">
     <header>
       <div class="brand">
-        <h1><router-link to="/">ZWT's Blog</router-link></h1>
+        <h1><router-link to="/">文桃的技术博客</router-link></h1>
         <p>NestJS + Vue3 重构实战</p>
       </div>
-      
+
       <div class="search-box">
-        <input 
-          type="text" 
-          v-model="keyword" 
-          @keyup.enter="handleSearch" 
-          placeholder="Search articles..."
-        />
+        <input type="text" v-model="keyword" @keyup.enter="handleSearch" placeholder="Search articles..." />
       </div>
     </header>
-    <hr/>
-    
+    <hr />
+
     <router-view :key="$route.fullPath"></router-view>
   </div>
 </template>
@@ -41,13 +36,36 @@ const handleSearch = () => {
 </script>
 
 <style>
-.container { max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, sans-serif; }
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, sans-serif;
+}
 
 /* Header 布局调整 */
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
-header h1 { margin: 0; font-size: 1.8rem; }
-header h1 a { text-decoration: none; color: #333; }
-header p { margin: 5px 0 0; color: #666; font-size: 0.9rem; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+header h1 a {
+  text-decoration: none;
+  color: #333;
+}
+
+header p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
 
 /* 搜索框样式 */
 .search-box input {
@@ -58,12 +76,20 @@ header p { margin: 5px 0 0; color: #666; font-size: 0.9rem; }
   width: 200px;
   transition: all 0.3s;
 }
+
 .search-box input:focus {
   border-color: #0070f3;
-  box-shadow: 0 0 0 3px rgba(0,112,243,0.1);
-  width: 250px; /* 聚焦变长特效 */
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+  width: 250px;
+  /* 聚焦变长特效 */
 }
 
-a { color: #0070f3; text-decoration: none; }
-a:hover { text-decoration: underline; }
+a {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
 </style>

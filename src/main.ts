@@ -11,24 +11,24 @@ import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-win
 async function bootstrap() {
   const app = await NestFactory.create(AppModule,
     {
-    logger: WinstonModule.createLogger({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.ms(),
-            // 生产环境通常用 winston.format.json()，开发环境用 nest-like 格式方便看
-            nestWinstonModuleUtilities.format.nestLike('ZwtBlog', {
-              prettyPrint: true,
-              colors: true, // 你的终端会五颜六色
-            }),
-          ),
-        }),
-        // 面试加分项：可以添加一个 File Transport 把错误日志写到文件里
-        // new winston.transports.File({ filename: 'error.log', level: 'error' }),
-      ],
-    }),
-  });
+      logger: WinstonModule.createLogger({
+        transports: [
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.ms(),
+              // 生产环境通常用 winston.format.json()，开发环境用 nest-like 格式方便看
+              nestWinstonModuleUtilities.format.nestLike('ZwtBlog', {
+                prettyPrint: true,
+                colors: true, // 你的终端会五颜六色
+              }),
+            ),
+          }),
+          // 面试加分项：可以添加一个 File Transport 把错误日志写到文件里
+          // new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        ],
+      }),
+    });
 
   // 👇👇👇 关键修改 1：设置全局前缀
   // 这样所有的路由（包括 Controller）都会自动加上 /api
@@ -40,8 +40,8 @@ async function bootstrap() {
 
   // 👇 注册全局拦截器
   app.useGlobalInterceptors(new TransformInterceptor());
-  
-// 👇 2. 配置 Swagger 文档信息
+
+  // 👇 2. 配置 Swagger 文档信息
   const config = new DocumentBuilder()
     .setTitle('ZWT Blog API')
     .setDescription('基于 NestJS + TypeORM + Redis 的高并发博客系统 API')
@@ -50,10 +50,10 @@ async function bootstrap() {
     // 👇👇👇 新增这一行：开启 Bearer Token 认证支持
     .addBearerAuth()
     .build();
-  
+
   // 👇 3. 创建文档
   const document = SwaggerModule.createDocument(app, config);
-  
+
   // 👇 4. 挂载 Swagger UI 到 /api-docs 路径
   SwaggerModule.setup('api-docs', app, document);
 

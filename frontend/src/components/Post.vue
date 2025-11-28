@@ -6,7 +6,7 @@
 
     <div v-else class="post-content">
       <h1 class="title">{{ article.title }}</h1>
-      
+
       <div class="meta">
         <span>📅 {{ formatDate(article.createdAt) }}</span>
         <span class="divider">|</span>
@@ -47,7 +47,7 @@ const formatDate = (date: string) => date ? format(new Date(date), 'yyyy-MM-dd H
 onMounted(async () => {
   try {
     const slug = route.params.slug
-    const res = await axios.get(`http://localhost:3000/articles/${slug}`)
+    const res = await axios.get(`/articles/${slug}`)
     article.value = res.data.data // ✅ 取出包裹在里面的 data
   } catch (e) {
     console.error("加载失败", e)
@@ -97,6 +97,7 @@ onMounted(async () => {
   padding: 50px;
   color: #666;
 }
+
 .spinner {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3498db;
@@ -106,10 +107,17 @@ onMounted(async () => {
   animation: spin 1s linear infinite;
   margin: 0 auto 10px;
 }
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
+
 .tag {
   background-color: #e1ecf4;
   color: #39739d;
