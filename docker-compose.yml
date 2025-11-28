@@ -1,4 +1,28 @@
 services:
+  # 数据库迁移脚本
+  migration-cli:
+    build: .
+    image: gdouzwt/blog-backend-cli:latest
+    container_name: blog-migration-cli
+    restart: 'no'
+    environment:
+      # 确保 CLI 能够连接数据库
+      DB_HOST: postgres 
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    networks:
+      - blog-network
+    volumes:
+      # 👇 关键：将 typeorm.config.ts 挂载进去，否则找不到配置
+      - ./typeorm.config.ts:/app/typeorm.config.ts 
+      # 挂载 node_modules 以确保 ts-node 等 dev 依赖可用
+      - /app/node_modules # 保持 node_modules 的匿名卷，供构建使用
+    depends_on:
+      blog-backend:
+        condition: service_started # 确保后端服务已启动
+
   # 🐘 数据库服务
   postgres:
     image: postgres:18-alpine
