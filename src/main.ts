@@ -18,7 +18,7 @@ async function bootstrap() {
               winston.format.timestamp(),
               winston.format.ms(),
               // 生产环境通常用 winston.format.json()，开发环境用 nest-like 格式方便看
-              nestWinstonModuleUtilities.format.nestLike('ZwtBlog', {
+              nestWinstonModuleUtilities.format.nestLike('Backend', {
                 prettyPrint: true,
                 colors: true, // 你的终端会五颜六色
               }),
@@ -57,7 +57,7 @@ async function bootstrap() {
   // 👇 4. 挂载 Swagger UI 到 /api-docs 路径
   SwaggerModule.setup('api-docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3721);
+  await app.listen(process.env.PORT ?? 3721, '0.0.0.0');
   // 👇 这里的 Log 就会变成 Winston 格式
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
