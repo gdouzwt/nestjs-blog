@@ -39,6 +39,15 @@ RUN npm ci --only=production && npm cache clean --force
 # 复制构建产物
 COPY --from=builder /app/dist ./dist
 
+# 👇 关键修复 1：将配置文件从宿主机拷贝到容器中
+# Docker Compose CLI 需要这个文件来知道如何连接数据库
+COPY typeorm.config.ts /app/typeorm.config.ts
+
+# 👇 关键修复 2：将 ts-node 等开发运行所需的依赖从 builder 阶段拷贝过来
+# 这一步保证了 typeorm-ts-node-commonjs 命令能运行
+COPY --from=builder /app/node_modules/ts-node /app/node_modules/ts-node
+COPY --from=builder /app/node_modules/typeorm-ts-node-commonjs /app/node_modules/typeorm-ts-node-commonjs
+
 # 暴露端口
 EXPOSE 3721
 
