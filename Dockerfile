@@ -40,7 +40,7 @@ RUN npm ci --only=production && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 
 # 暴露端口
-EXPOSE 3000
+EXPOSE 3721
 
 # 🌟 优化点 3: 安全性提升 - 切换到非 root 用户
 USER node

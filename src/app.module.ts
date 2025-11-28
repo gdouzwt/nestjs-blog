@@ -32,6 +32,8 @@ import { Tag } from './tag/tag.entity';
         // --- 👇 必须补上这部分，否则 ConfigService 读不到 ---
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
+        REDIS_PASSWORD: Joi.string().required(),
+
 
         // --- 环境 ---
         NODE_ENV: Joi.string()
@@ -61,6 +63,7 @@ import { Tag } from './tag/tag.entity';
           // 这里不再写 process.env，而是统一用 configService
           host: configService.get<string>('REDIS_HOST'),
           port: configService.get<number>('REDIS_PORT'),
+          password: configService.get<string>('REDIS_PASSWORD'),
         },
       }),
     }),

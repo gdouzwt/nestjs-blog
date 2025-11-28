@@ -13,6 +13,7 @@ import Redis from 'ioredis';
           // 3. 使用 configService 获取配置，类型更安全
           host: configService.get<string>('REDIS_HOST'),
           port: configService.get<number>('REDIS_PORT'),
+          password: configService.get<string>('REDIS_PASSWORD'),
         });
       },
       // 4. 关键点：inject 属性告诉 NestJS，“执行工厂函数前，先把 ConfigService 注入进去”

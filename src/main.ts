@@ -5,7 +5,6 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 // 👇 1. 引入 Swagger 相关类
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 // 👇 1. 引入依赖
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import * as winston from 'winston';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 
@@ -58,7 +57,7 @@ async function bootstrap() {
   // 👇 4. 挂载 Swagger UI 到 /api-docs 路径
   SwaggerModule.setup('api-docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3721);
   // 👇 这里的 Log 就会变成 Winston 格式
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
