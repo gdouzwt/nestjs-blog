@@ -31,6 +31,11 @@ async function bootstrap() {
     }),
   });
 
+  // 👇👇👇 关键修改 1：设置全局前缀
+  // 这样所有的路由（包括 Controller）都会自动加上 /api
+  // 比如 ArticleController 的 /articles 会自动变成 /api/articles
+  app.setGlobalPrefix('api');
+
   // 👇👇👇 加上这一行，允许跨域访问
   app.enableCors();
 

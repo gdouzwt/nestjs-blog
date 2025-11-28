@@ -1,0 +1,12 @@
+# .dockerignore for frontend/
+
+# 编译产物，在容器内部重新生成
+/dist
+
+# 本地依赖，在容器内部重新安装
+/node_modules
+
+# 缓存文件
+.vite/
+npm-debug.log
+.DS_Store

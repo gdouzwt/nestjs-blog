@@ -3,23 +3,27 @@ import * as path from 'path';
 import matter from 'gray-matter';
 import { DataSource } from 'typeorm';
 import { Article } from '../src/article/article.entity';
-// 1. 引入 Tag 实体
 import { Tag } from '../src/tag/tag.entity';
+import * as dotenv from 'dotenv'; // 👈 1. 引入 dotenv
 
-// ⚠️⚠️⚠️ 修改这里：指向你本地 Jekyll 博客的 _posts 目录 ⚠️⚠️⚠️
-// 例如：'/Users/zwt/code/blog.zwt.io/_posts'
-const JEKYLL_POSTS_PATH = '/Users/tao/Desktop/GitHub/blog/_posts';
+// 🚀 核心修改：脚本启动时手动加载 .env 文件
+dotenv.config();
 
-// 数据库配置（需要和 app.module.ts 保持一致）
+// 路径变量也从环境变量中读取，避免路径写死
+const JEKYLL_POSTS_PATH = process.env.JEKYLL_POSTS_PATH || '/Users/tao/Desktop/GitHub/blog/_posts';
+
+// 数据库配置 (所有敏感信息均从 process.env 中读取)
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'se1124',
-  database: 'blog',
+  // 使用 DB_HOST, DB_PORT 等统一变量
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USER || 'postgres',
+  // 关键修复：从环境变量中读取密码！
+  password: process.env.DB_PASSWORD, 
+  database: process.env.DB_NAME || 'blog_db',
   entities: [Article, Tag],
-  synchronize: false, // 脚本运行不需要同步表结构，因为已经建好了
+  synchronize: false, 
 });
 
 async function importPosts() {
@@ -31,7 +35,7 @@ async function importPosts() {
 
   if (!fs.existsSync(JEKYLL_POSTS_PATH)) {
     console.error(`❌ 找不到目录: ${JEKYLL_POSTS_PATH}`);
-    console.error('请修改脚本中的 JEKYLL_POSTS_PATH 变量！');
+    console.error('请在 .env 文件中设置 JEKYLL_POSTS_PATH 变量！');
     process.exit(1);
   }
 
@@ -44,8 +48,7 @@ async function importPosts() {
     if (!file.endsWith('.md')) continue;
 
     try {
-      // 1. 解析文件名 (Jekyll 格式: 2023-08-04-title-slug.md)
-      // 这里的正则假设文件名格式为: YYYY-MM-DD-slug.md
+      // 1. 解析文件名 (Jekyll 格式: YYYY-MM-DD-title-slug.md)
       const match = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
       if (!match) {
         console.warn(`⚠️ 跳过文件 (格式不匹配): ${file}`);
@@ -66,7 +69,7 @@ async function importPosts() {
         continue;
       }
 
-      // 解析 tags (Jekyll 的 front-matter 可能是 tags: ['A', 'B'] 或者 tags: "A B")
+      // 解析 tags 
       let tagNames: string[] = [];
       if (Array.isArray(data.tags)) {
         tagNames = data.tags;
@@ -76,31 +79,28 @@ async function importPosts() {
 
       // 💾 智能标签处理逻辑
       const articleTags: Tag[] = [];
-      const tagRepo = AppDataSource.getRepository(Tag); // 获取 Tag 仓库
+      const tagRepo = AppDataSource.getRepository(Tag); 
 
       for (const tagName of tagNames) {
-        // 先查库里有没有这个标签
         let tag = await tagRepo.findOneBy({ name: tagName });
         if (!tag) {
-          // 没有才创建
           tag = new Tag();
           tag.name = tagName;
-          await tagRepo.save(tag); // 先保存 Tag
+          await tagRepo.save(tag);
         }
         articleTags.push(tag);
       }
 
       // 4. 创建实体对象
       const article = new Article();
-      article.title = data.title || slug; // 如果没有标题，用 slug 代替
+      article.title = data.title || slug; 
       article.slug = slug;
       article.content = content; // Markdown 正文
-      article.isPublished = true; // 默认直接发布
-      article.createdAt = new Date(dateStr); // 使用文件名里的日期
-      // 兼容处理：如果 Jekyll 里有 description，就作为摘要，否则截取前 100 字
+      article.isPublished = true; 
+      article.createdAt = new Date(dateStr); 
       article.summary = data.description || content.substring(0, 150).replace(/[\r\n#]/g, ' ') + '...';
 
-      article.tags = articleTags; // 关联已存在的 Tag 对象
+      article.tags = articleTags; 
       
       // 5. 保存到数据库
       await articleRepo.save(article);

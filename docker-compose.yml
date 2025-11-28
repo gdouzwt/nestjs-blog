@@ -4,9 +4,9 @@ services:
     image: postgres:18-alpine
     container_name: blog-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: se1124
-      POSTGRES_DB: blog
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
@@ -25,25 +25,41 @@ services:
 
   # ⚡️ 你的 NestJS 后端
   blog-backend:
-    build: .              # 告诉它：Dockerfile 就在当前目录
+    build: .
+    image: zwt-blog-backend:latest
     container_name: blog-backend
     ports:
-      - "3000:3000"       # 宿主机 3000 -> 容器 3000
+      - "3000:3000"
     environment:
-      - DB_HOST=postgres  # ⚠️ 这里填的是上面服务的名字！不是 localhost
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=se1124
-      - DB_NAME=blog_db
-      - REDIS_HOST=redis  # ⚠️ 同理，这里填 redis 服务名
-      - REDIS_PORT=6379
-    depends_on:           # 确保 DB 和 Redis 先启动，后端再启动
+      - DB_HOST=postgres
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}     # 对应上面的 POSTGRES_DB
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+    depends_on:
       - postgres
       - redis
+    networks:               # 🔧 修复1: 必须加入同一个网络！
+      - blog-network
+
+  # 🎨 前端 Nginx (反向代理)
+  blog-frontend:
+    image: nginx:alpine
+    container_name: blog-frontend
+    volumes:
+      # ⚠️ 注意：运行前请确保你本地已经执行过 npm run build 生成了 dist
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - blog-backend
     networks:
       - blog-network
 
-# 定义网络，让它们能互通
+# 定义网络
 networks:
   blog-network:
     driver: bridge

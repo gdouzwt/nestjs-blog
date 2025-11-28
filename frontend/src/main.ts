@@ -20,6 +20,9 @@ axios.interceptors.response.use(
   }
 );
 
+axios.defaults.baseURL = '/api';
+
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
