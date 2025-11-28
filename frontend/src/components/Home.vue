@@ -1,130 +1,103 @@
-<template>
-  <div v-if="loading">加载中...</div>
-  <div v-else>
-    <div v-for="article in articles" :key="article.id" class="article-item">
-      <h2>
-        <router-link :to="'/posts/' + article.slug">{{ article.title }}</router-link>
-      </h2>
-      <small>{{ formatDate(article.createdAt) }} · {{ article.views }} 阅读 · </small>
-      <span class="tags-wrapper" v-if="article.tags && article.tags.length">
-        <span v-for="tag in article.tags" :key="tag.id" class="tag">
-          #{{ tag.name }}
-        </span>
-      </span>
-      <p>{{ article.summary }}</p>
-    </div>
-
-    <div class="pagination">
-      <button :disabled="page <= 1" @click="changePage(page - 1)">上一页</button>
-      <span> 第 {{ page }} 页 </span>
-      <button :disabled="page >= totalPages" @click="changePage(page + 1)">下一页</button>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 import { format } from 'date-fns'
-import { useRoute } from 'vue-router'
+import { NCard, NSpace, NTag, NSkeleton, NButton, NEmpty, NResult } from 'naive-ui'
 
-const articles = ref<any[]>([])
-const loading = ref(true)
-const page = ref(1)
-const totalPages = ref(1)
-const route = useRoute()
+const router = useRouter()
+const posts = ref<any[]>([])
+const loading = ref(true) // 👈 加载状态
+const error = ref(false)
 
-const fetchArticles = async (p: number) => {
-  loading.value = true
+const fetchPosts = async () => {
   try {
-    const searchQuery = route.query.q
-
-    let url = ''
-    // 🔄 分支逻辑：有 q 参数就搜，没有就查列表
-    if (searchQuery) {
-      console.log('正在搜索:', searchQuery)
-      url = `/articles/search?q=${searchQuery}`
-    } else {
-      url = `/articles?page=${p}&limit=5`
-    }
-
-    const res = await axios.get(url)
-
-    // 搜索接口返回的是数组，分页接口返回的是 { items: [] }，这里要做个兼容
-    if (searchQuery) {
-      articles.value = res.data.data // 搜索结果直接是数组
-      totalPages.value = 1 // 搜索暂不做分页
-      page.value = 1
-    } else {
-      const responseData = res.data.data
-      articles.value = responseData.items
-      totalPages.value = responseData.totalPages
-      page.value = responseData.page
-    }
+    loading.value = true
+    error.value = false
+    // ✅ 这里的接口已经在之前的对话中修好了
+    const res = await axios.get('/articles?page=1&limit=10')
+    posts.value = res.data.data?.items || []
   } catch (e) {
     console.error(e)
+    error.value = true
   } finally {
     loading.value = false
   }
 }
 
-const changePage = (p: number) => fetchArticles(p)
-const formatDate = (date: string) => format(new Date(date), 'yyyy-MM-dd')
+const goToPost = (slug: string) => {
+  router.push(`/posts/${slug}`)
+}
 
-// 监听路由参数变化（比如从普通列表切换到搜索结果）
-watch(() => route.query, () => {
-  fetchArticles(1)
-})
-
-onMounted(() => fetchArticles(1))
+onMounted(fetchPosts)
 </script>
 
+<template>
+  <div class="home-container">
+    <div class="welcome-banner">
+      <h1>探索技术的边界</h1>
+      <p>记录后端架构、容器化与全栈开发的思考</p>
+    </div>
+
+    <n-result v-if="error" status="500" title="服务器开小差了" description="请检查网络或稍后再试">
+      <template #footer>
+        <n-button @click="fetchPosts">重试</n-button>
+      </template>
+    </n-result>
+
+    <n-space vertical v-else-if="loading">
+      <n-card v-for="n in 3" :key="n" style="margin-bottom: 12px">
+        <n-skeleton text style="width: 60%" />
+        <n-skeleton text :repeat="2" />
+      </n-card>
+    </n-space>
+
+    <n-empty v-else-if="posts.length === 0" description="暂无文章，博主正在努力码字中..." />
+
+    <n-space vertical v-else>
+      <n-card 
+        v-for="post in posts" 
+        :key="post.id" 
+        :title="post.title" 
+        hoverable 
+        class="post-card"
+        @click="goToPost(post.slug)"
+      >
+        <template #header-extra>
+          <n-tag type="success" size="small">
+             {{ format(new Date(post.createdAt), 'yyyy-MM-dd') }}
+          </n-tag>
+        </template>
+        
+        <p class="summary">{{ post.summary }}</p>
+        
+        <template #footer>
+          <n-space>
+             <n-tag v-for="tag in post.tags" :key="tag.id" size="tiny" :bordered="false" type="info">
+              #{{ tag.name }}
+            </n-tag>
+          </n-space>
+        </template>
+      </n-card>
+    </n-space>
+  </div>
+</template>
+
 <style scoped>
-/* 新增样式 */
-.meta-row {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  /* 时间和标签之间的间距 */
-  margin-bottom: 10px;
+.welcome-banner {
+  margin-bottom: 30px;
+  text-align: center;
 }
-
-.tags-wrapper {
-  display: inline-flex;
-  gap: 5px;
-}
-
-.tag {
-  background-color: #f1f8ff;
-  color: #0366d6;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  text-decoration: none;
-}
-
-.article-item {
-  margin-bottom: 40px;
-}
-
-.article-item h2 {
-  margin-bottom: 10px;
-}
-
-.pagination {
-  margin-top: 40px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-button {
-  padding: 5px 15px;
+.post-card {
   cursor: pointer;
+  transition: transform 0.2s;
 }
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.post-card:hover {
+  transform: translateY(-2px);
+}
+.summary {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 </style>

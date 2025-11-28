@@ -1,129 +1,77 @@
-<template>
-  <div class="post-container">
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div> 正在加载文章...
-    </div>
-
-    <div v-else class="post-content">
-      <h1 class="title">{{ article.title }}</h1>
-
-      <div class="meta">
-        <span>📅 {{ formatDate(article.createdAt) }}</span>
-        <span class="divider">|</span>
-        <span class="divider">|</span>
-        <span v-for="tag in article.tags" :key="tag.id" class="tag">
-          #{{ tag.name }}
-        </span>
-        <span>🔥 {{ article.views }} 阅读</span>
-      </div>
-
-      <hr />
-
-      <div v-html="renderedContent" class="markdown-body"></div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { format } from 'date-fns'
-// 👇 引入 GitHub 风格样式
-import 'github-markdown-css/github-markdown-light.css'
+import { NButton, NSpin, NTag, NDivider } from 'naive-ui'
 
 const route = useRoute()
-const md = new MarkdownIt({ html: true, linkify: true }) // 允许 HTML 标签
-const article = ref<any>({})
+const router = useRouter()
+const md = new MarkdownIt({ html: true, linkify: true })
+
+const post = ref<any>(null)
 const loading = ref(true)
-
-const renderedContent = computed(() => {
-  return article.value.content ? md.render(article.value.content) : ''
-})
-
-const formatDate = (date: string) => date ? format(new Date(date), 'yyyy-MM-dd HH:mm') : ''
+const htmlContent = ref('')
 
 onMounted(async () => {
+  const slug = route.params.slug
   try {
-    const slug = route.params.slug
+    // 调用后端详情接口
     const res = await axios.get(`/articles/${slug}`)
-    article.value = res.data.data // ✅ 取出包裹在里面的 data
+    post.value = res.data
+    // 渲染 Markdown
+    htmlContent.value = md.render(res.data.content || '')
   } catch (e) {
-    console.error("加载失败", e)
+    console.error(e)
+    // 这里可以加个 404 跳转
   } finally {
     loading.value = false
   }
 })
 </script>
 
-<style scoped>
-.post-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  background: #fff;
-}
+<template>
+  <div class="post-container">
+    <n-button text @click="router.back()" style="margin-bottom: 20px">
+      &lt; 返回列表
+    </n-button>
 
-.title {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  color: #24292e;
-}
+    <div v-if="loading" class="loading-box">
+      <n-spin size="large" />
+    </div>
 
-.meta {
-  color: #586069;
-  font-size: 0.9rem;
-  margin-bottom: 2rem;
-}
+    <article v-else-if="post" class="article-content">
+      <h1 class="title">{{ post.title }}</h1>
+      
+      <div class="meta">
+        <span>发布于 {{ format(new Date(post.createdAt), 'yyyy年MM月dd日') }}</span>
+        <n-divider vertical />
+        <n-tag v-for="tag in post.tags" :key="tag.id" size="small" type="primary" style="margin-right: 5px">
+          {{ tag.name }}
+        </n-tag>
+      </div>
 
-.divider {
-  margin: 0 10px;
-  color: #ddd;
-}
+      <n-divider />
 
-/* 微调 markdown-body 的边距 */
+      <div class="markdown-body" v-html="htmlContent"></div>
+    </article>
+  </div>
+</template>
+
+<style>
+/* 这里写一些简单的 Markdown 样式，或者引入 prismjs 高亮代码 */
 .markdown-body {
-  box-sizing: border-box;
-  min-width: 200px;
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 15px 0;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  color: #333;
 }
+.markdown-body h2 { margin-top: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.markdown-body pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+.markdown-body blockquote { border-left: 4px solid #ddd; padding-left: 15px; color: #666; margin-left: 0; }
+.markdown-body img { max-width: 100%; border-radius: 4px; }
 
-/* 简单的 Loading 动画 */
-.loading {
-  text-align: center;
-  padding: 50px;
-  color: #666;
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.tag {
-  background-color: #e1ecf4;
-  color: #39739d;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-right: 5px;
-}
+.title { font-size: 2rem; margin-bottom: 10px; }
+.meta { color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+.loading-box { text-align: center; padding: 50px; }
 </style>
