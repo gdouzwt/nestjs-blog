@@ -25,11 +25,10 @@ services:
 
   # ⚡️ 你的 NestJS 后端
   blog-backend:
-    build: .
-    image: zwt-blog-backend:latest
+    image: gdouzwt/blog-backend:latest
     container_name: blog-backend
     ports:
-      - "3000:3000"
+      - "3721:3721"
     environment:
       - DB_HOST=postgres
       - DB_PORT=${DB_PORT}
@@ -46,14 +45,10 @@ services:
 
   # 🎨 前端 Nginx (反向代理)
   blog-frontend:
-    image: nginx:alpine
+    image: gdouzwt/blog-frontend:latest
     container_name: blog-frontend
-    volumes:
-      # ⚠️ 注意：运行前请确保你本地已经执行过 npm run build 生成了 dist
-      - ./frontend/dist:/usr/share/nginx/html
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       - blog-backend
     networks:
