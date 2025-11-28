@@ -19,9 +19,14 @@ onMounted(async () => {
   try {
     // 调用后端详情接口
     const res = await axios.get(`/articles/${slug}`)
-    post.value = res.data
-    // 渲染 Markdown
-    htmlContent.value = md.render(res.data.content || '')
+    // 1. 先把真正的业务数据解构出来 (对应后端返回的 data 字段)
+      const articleData = res.data.data
+      
+    // 2. 赋值给响应式变量
+      post.value = articleData
+
+      // 3. 渲染 Markdown (⚠️ 注意这里要用 articleData.content)
+      htmlContent.value = md.render(articleData.content || '')
   } catch (e) {
     console.error(e)
     // 这里可以加个 404 跳转
