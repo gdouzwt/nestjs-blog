@@ -41,6 +41,7 @@ services:
       - DB_NAME=${DB_NAME}     # 对应上面的 POSTGRES_DB
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       - postgres
       - redis
