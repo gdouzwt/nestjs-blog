@@ -10,6 +10,8 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
+    "dev": "concurrently \"npm run start:dev\" \"cd frontend && npm run dev\" --names \"BACK,FRONT\" --prefix-colors \"blue,green\"",
+    "dev:full": "concurrently \"docker compose up -d postgres redis\" \"npm run start:dev\" \"cd frontend && npm run dev\"",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -21,7 +23,8 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm migration:generate -- -d typeorm.config.ts",
     "migration:run": "npm run typeorm migration:run -- -d typeorm.config.ts",
-    "migration:revert": "npm run typeorm migration:revert -- -d typeorm.config.ts"
+    "migration:revert": "npm run typeorm migration:revert -- -d typeorm.config.ts",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",
@@ -54,11 +57,14 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@swc/cli": "^0.7.9",
+    "@swc/core": "^1.15.3",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
+    "concurrently": "^9.2.1",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -73,7 +79,8 @@
     "tsconfig-paths": "^4.2.0",
     "typeorm": "^0.3.27",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "husky": "^8.0.0"
   },
   "jest": {
     "moduleFileExtensions": [
