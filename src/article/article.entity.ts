@@ -1,6 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index, VersionColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn,
+  UpdateDateColumn, Index, VersionColumn, JoinTable, ManyToMany } from 'typeorm';
 import { Tag } from '../tag/tag.entity'; // 👈 引入 Tag
-import { JoinTable, ManyToMany } from 'typeorm'; // 👈 引入装饰器
 /**
  * 面试亮点：
  * 1. 使用 UUID 主键，防止 ID 遍历，适合分布式场景。
@@ -10,10 +10,10 @@ import { JoinTable, ManyToMany } from 'typeorm'; // 👈 引入装饰器
  */
 
 // 建立联合索引：针对“查询最新发布的文章”这一高频场景
-@Index(['isPublished', 'createdAt']) 
+@Index(['isPublished', 'createdAt'])
 @Entity('articles')
 export class Article {
-  
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -51,6 +51,6 @@ export class Article {
   // @JoinTable 必须加在关系的主导侧（通常是 Article 这一侧）
   // cascade: true 表示保存文章时，如果 tag 不存在，会自动创建 tag，这非常方便！
   @ManyToMany(() => Tag, (tag) => tag.articles, { cascade: true })
-  @JoinTable() 
+  @JoinTable()
   tags: Tag[];
 }

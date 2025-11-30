@@ -1,15 +1,14 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, UseGuards } from '@nestjs/common';
 import { ArticleService } from './article.service';
+import { AuthGuard } from '@nestjs/passport'; // 👈 引入守卫
 // 👇 引入 Swagger 装饰器
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Post, Body, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport'; // 👈 引入守卫
 
 @ApiTags('articles') // 👈 给这个 Controller 分类
 @ApiBearerAuth() // 👈 关键：给整个 Controller 加上这个，Swagger 页面右上角就会出现“Authorize”按钮
 @Controller('articles')
 export class ArticleController {
-  constructor(private readonly articleService: ArticleService) {}
+  constructor(private readonly articleService: ArticleService) { }
 
   // 👇 新增：发布文章接口
   @Post()
@@ -34,7 +33,7 @@ export class ArticleController {
     return this.articleService.findAll(pageNum, limitNum);
   }
 
-// 🔍 搜索接口 (一定要放在 Get(':slug') 之前 !!!)
+  // 🔍 搜索接口 (一定要放在 Get(':slug') 之前 !!!)
   @Get('search')
   @ApiOperation({ summary: '搜索文章 (支持标题和摘要)' })
   async search(@Query('q') q: string) {

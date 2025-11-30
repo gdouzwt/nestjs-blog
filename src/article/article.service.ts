@@ -55,7 +55,10 @@ export class ArticleService {
 
     this.logger.warn(`🐢 [Cache Miss] ${slug}`); // ⚠️ 用 warn 区分一下颜色
     const article = await this.articleRepository.findOne({
-      where: { slug },
+      where: { 
+        slug,
+        isPublished: true,
+      },
       relations:['tags'],
       select: ['id', 'title', 'slug', 'content', 'summary', 'createdAt', 'views', 'version'],
     });
