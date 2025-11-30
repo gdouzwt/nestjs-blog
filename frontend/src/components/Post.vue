@@ -5,7 +5,34 @@ import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { format } from 'date-fns'
 import { NButton, NSpin, NTag, NDivider, NResult } from 'naive-ui'
+
+// 👇👇👇 核心修复开始：引入高亮核心和语言包
 import hljs from 'highlight.js/lib/core';
+
+// 按需引入你博客里用到的语言 (缺哪个引哪个)
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import java from 'highlight.js/lib/languages/java';       // 👈 Java 文章必须
+import sql from 'highlight.js/lib/languages/sql';         // 👈 数据库文章必须
+import bash from 'highlight.js/lib/languages/bash';       // 👈 Linux 命令必须
+import xml from 'highlight.js/lib/languages/xml';         // HTML/XML
+import yaml from 'highlight.js/lib/languages/yaml';       // Docker Compose/K8s
+import json from 'highlight.js/lib/languages/json';
+import plaintext from 'highlight.js/lib/languages/plaintext'; // 兜底用
+
+// 注册语言 (必须执行！)
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('shell', bash); // 兼容 shell 写法
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('html', xml);   // 兼容 html 写法
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('plaintext', plaintext);
+// 👆👆👆 核心修复结束
 
 const route = useRoute()
 const router = useRouter()
@@ -132,23 +159,52 @@ onMounted(async () => {
   padding-bottom: 10px;
 }
 
+/* 👇👇👇【核心修复】Markdown 代码块样式重置 */
 .markdown-body pre {
-  background: #f4f4f4;
-  padding: 15px;
-  border-radius: 5px;
-  overflow-x: auto;
+  background-color: #282c34; /* 强制深色背景 (配合 atom-one-dark) */
+  border-radius: 6px;
+  padding: 1em;
+  margin: 1em 0;
+  overflow-x: auto; /* 允许左右滑动 */
+  
+  /* 🚨 强制左对齐，解决居中问题 */
+  text-align: left; 
+  line-height: 1.5;
 }
 
-.markdown-body blockquote {
-  border-left: 4px solid #ddd;
-  padding-left: 15px;
-  color: #666;
-  margin-left: 0;
+.markdown-body code {
+  font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  
+  /* 🚨 修复 Inline Code 的样式 */
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
 }
 
+/* 避免 pre 里的 code 重复背景色 */
+.markdown-body pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit; /* 继承 highlight.js 的颜色 */
+}
+
+/* 修复图片过大撑破布局 */
 .markdown-body img {
   max-width: 100%;
-  border-radius: 4px;
+  height: auto;
+  display: block;
+  margin: 20px auto; /* 图片居中 */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* 修复列表缩进 */
+.markdown-body ul, .markdown-body ol {
+  padding-left: 2em;
+  margin-bottom: 1em;
+  text-align: left; /* 强制列表也左对齐 */
 }
 
 .title {

@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios' // 👈 引入 axios
-import './style.css' // 保持默认样式，或者一会儿我们换个好看的 CSS
+import 'highlight.js/styles/atom-one-dark.min.css' // 换个好看的 CSS
 import App from './App.vue'
 import Home from './components/Home.vue'
 import Post from './components/Post.vue'
