@@ -46,4 +46,4 @@ EXPOSE 3721
 USER node
 
 # 启动
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main"]
