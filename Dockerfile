@@ -33,8 +33,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-# 只安装生产依赖
-RUN npm ci --only=production && npm cache clean --force
+# 👇 关键修改：先删除 prepare 脚本，再安装依赖
+RUN npm pkg delete scripts.prepare && npm ci --only=production && npm cache clean --force
 
 # 复制构建产物
 COPY --from=builder /app/dist ./dist

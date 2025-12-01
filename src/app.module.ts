@@ -13,6 +13,7 @@ import { ArticleProcessor } from './article/article.processor';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { Tag } from './tag/tag.entity';
+import { SitemapController } from './sitemap/sitemap.controller';
 
 @Module({
   imports: [
@@ -31,7 +32,6 @@ import { Tag } from './tag/tag.entity';
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
         REDIS_PASSWORD: Joi.string().required(),
-
 
         // --- 环境 ---
         NODE_ENV: Joi.string()
@@ -87,7 +87,7 @@ import { Tag } from './tag/tag.entity';
     }),
     TypeOrmModule.forFeature([Article]),
   ],
-  controllers: [ArticleController],
+  controllers: [ArticleController, SitemapController],
   providers: [
     ArticleService,
     ArticleProcessor,
@@ -97,4 +97,4 @@ import { Tag } from './tag/tag.entity';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
