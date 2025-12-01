@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 import axios from 'axios';
 import { useRouter, useRoute } from 'vue-router';
 import { format } from 'date-fns';
