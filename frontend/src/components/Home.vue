@@ -1,35 +1,48 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
-import { format } from 'date-fns'
+import { ref, onMounted, watch } from 'vue';
+import axios from 'axios';
+import { useRouter, useRoute } from 'vue-router';
+import { format } from 'date-fns';
 import {
-  NGrid, NGridItem, NSkeleton, NEmpty, NResult, NButton,
+  NGrid,
+  NGridItem,
+  NSkeleton,
+  NEmpty,
+  NResult,
+  NButton,
   NPagination,
-} from 'naive-ui'
+} from 'naive-ui';
 
-const router = useRouter()
-const posts = ref<any[]>([])
-const loading = ref(true)
-const error = ref(false)
+const router = useRouter();
+const route = useRoute();
+const posts = ref<any[]>([]);
+const loading = ref(true);
+const error = ref(false);
 
 // 👇👇👇 分页核心逻辑
-const page = ref(1)
-const pageSize = ref(12) // 12 是网格布局的最佳数字 (能被 2,3,4 整除)
-const totalCount = ref(0)
+// 1. 初始化 page 时，优先读取 URL 里的 query 参数
+const page = ref(Number(route.query.page) || 1);
+const pageSize = ref(12); // 12 是网格布局的最佳数字 (能被 2,3,4 整除)
+const totalCount = ref(0);
 
 // 🎨 生成随机渐变背景 (模拟封面图)
 const getCoverStyle = (id: string) => {
   const colors = [
-    ['#ff9a9e', '#fecfef'], ['#a18cd1', '#fbc2eb'], ['#84fab0', '#8fd3f4'],
-    ['#cfd9df', '#e2ebf0'], ['#e0c3fc', '#8ec5fc'], ['#4facfe', '#00f2fe'],
-    ['#43e97b', '#38f9d7'], ['#fa709a', '#fee140'], ['#667eea', '#764ba2']
-  ]
-  const index = id.charCodeAt(0) % colors.length
+    ['#ff9a9e', '#fecfef'],
+    ['#a18cd1', '#fbc2eb'],
+    ['#84fab0', '#8fd3f4'],
+    ['#cfd9df', '#e2ebf0'],
+    ['#e0c3fc', '#8ec5fc'],
+    ['#4facfe', '#00f2fe'],
+    ['#43e97b', '#38f9d7'],
+    ['#fa709a', '#fee140'],
+    ['#667eea', '#764ba2'],
+  ];
+  const index = id.charCodeAt(0) % colors.length;
 
   // 👇 修改这里：解构赋值，并给一个默认值 || colors[0]
   // 👇 加上 "as string[]" 强制类型断言
-  const [colorStart, colorEnd] = (colors[index] || colors[0]) as string[]
+  const [colorStart, colorEnd] = (colors[index] || colors[0]) as string[];
 
   return {
     background: `linear-gradient(120deg, ${colorStart} 0%, ${colorEnd} 100%)`,
@@ -41,78 +54,128 @@ const getCoverStyle = (id: string) => {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: '2.5rem',
-    textShadow: '0 2px 10px rgba(0,0,0,0.3)'
-  }
-}
+    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+  };
+};
 
 const fetchPosts = async () => {
   try {
-    loading.value = true
-    error.value = false
+    loading.value = true;
+    error.value = false;
 
     // 发起请求
-    const res = await axios.get(`/articles?page=${page.value}&limit=${pageSize.value}`)
+    const res = await axios.get(
+      `/articles?page=${page.value}&limit=${pageSize.value}`,
+    );
 
     // 🛡️ 健壮的数据解构 (无论你有没有拦截器剥壳，这行都能工作)
-    const responseData = res.data?.data || res.data || res
+    const data = res.data?.data || res.data || res;
 
-    // 赋值
-    posts.value = responseData.items || []
-    totalCount.value = responseData.total || 0
+    const items = data.items || [];
+    const total = data.total || 0;
 
+    // 2. 👇👇👇 核心修复：分页越界检查
+    // 计算实际最大页数 (如果 total 是 0，最大页也就是 1)
+    const maxPage = Math.ceil(total / pageSize.value) || 1;
+
+    // 如果当前页码 > 最大页码 (比如当前是 9，最大是 2)
+    if (page.value > maxPage) {
+      // 🚀 执行“归位”操作：替换 URL 为最大页码
+      // 使用 replace 而不是 push，这样用户按“后退”不会死循环
+      await router.replace({
+        query: { ...router.currentRoute.value.query, page: maxPage },
+      });
+
+      // 这里的 return 会结束当前 fetch，
+      // 因为路由变了，watch 会自动触发下一次正确的 fetchPosts
+      return;
+    }
+    // 👆👆👆 修复结束
+
+    // 3. 正常赋值
+    posts.value = items;
+    totalCount.value = total;
   } catch (e) {
-    console.error(e)
-    error.value = true
+    console.error(e);
+    error.value = true;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
-// 📄 翻页事件
+// 2. 翻页处理：只负责改 URL，不直接调 fetch
 const handlePageChange = (newPage: number) => {
-  page.value = newPage
-  fetchPosts()
-  // 翻页后平滑回到顶部
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
+  // 修改路由参数，但这不会触发刷新，只会变 URL
+  router.push({
+    query: { ...route.query, page: newPage },
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// 3. 监听路由变化：URL 变了，才去请求数据 (响应式核心)
+// 这样无论是点击分页，还是浏览器“后退”按钮，都能正确加载数据
+watch(
+  () => route.query.page,
+  (newPage) => {
+    // 如果 URL 里没 page 参数，默认是 1
+    page.value = Number(newPage) || 1;
+    fetchPosts();
+  },
+  { immediate: true }, // 组件加载时立即触发一次
+);
 
 const goToPost = (slug: string) => {
-  router.push(`/posts/${slug}`)
-}
-
-onMounted(fetchPosts)
+  router.push(`/posts/${slug}`);
+};
 </script>
 
 <template>
   <div class="home-wrapper">
-
     <div class="header-section">
       <h2>最新更新</h2>
       <span class="count-badge" v-if="totalCount > 0">{{ totalCount }} 部</span>
     </div>
 
-    <n-result v-if="error" status="500" title="连接超时" description="服务器正在全力加载中...">
-      <template #footer><n-button @click="fetchPosts">刷新重试</n-button></template>
+    <n-result
+      v-if="error"
+      status="500"
+      title="连接超时"
+      description="服务器正在全力加载中..."
+    >
+      <template #footer
+        ><n-button @click="fetchPosts">刷新重试</n-button></template
+      >
     </n-result>
 
-    <n-grid v-else-if="loading" cols="1 s:2 m:3 l:4" responsive="screen" :x-gap="16" :y-gap="24">
+    <n-grid
+      v-else-if="loading"
+      cols="1 s:2 m:3 l:4"
+      responsive="screen"
+      :x-gap="16"
+      :y-gap="24"
+    >
       <n-grid-item v-for="n in 8" :key="n">
         <div class="skeleton-card">
-          <n-skeleton height="0" style="padding-bottom: 56.25%; border-radius: 8px;" />
-          <n-skeleton text style="width: 80%; margin-top: 10px; height: 18px;" />
-          <n-skeleton text style="width: 40%; margin-top: 5px;" />
+          <n-skeleton
+            height="0"
+            style="padding-bottom: 56.25%; border-radius: 8px"
+          />
+          <n-skeleton text style="width: 80%; margin-top: 10px; height: 18px" />
+          <n-skeleton text style="width: 40%; margin-top: 5px" />
         </div>
       </n-grid-item>
     </n-grid>
 
-    <n-empty v-else-if="posts.length === 0" description="暂无内容" style="margin-top: 100px" />
+    <n-empty
+      v-else-if="posts.length === 0"
+      description="暂无内容"
+      style="margin-top: 100px"
+    />
 
     <div v-else>
       <n-grid cols="1 s:2 m:3 l:4" responsive="screen" :x-gap="16" :y-gap="24">
         <n-grid-item v-for="post in posts" :key="post.id">
-
           <div class="video-card" @click="goToPost(post.slug)">
-
             <div class="cover-box">
               <div :style="getCoverStyle(post.id)">
                 {{ post.title.charAt(0).toUpperCase() }}
@@ -132,20 +195,25 @@ onMounted(fetchPosts)
 
               <div class="meta">
                 <span class="views">{{ post.views || 0 }} 次观看</span>
-                <span class="date">{{ format(new Date(post.createdAt), 'yyyy-MM-dd') }}</span>
+                <span class="date">{{
+                  format(new Date(post.createdAt), 'yyyy-MM-dd')
+                }}</span>
               </div>
             </div>
-
           </div>
         </n-grid-item>
       </n-grid>
 
       <div class="pagination-box">
-        <n-pagination v-model:page="page" :item-count="totalCount" :page-size="pageSize" @update:page="handlePageChange"
-          size="medium" />
+        <n-pagination
+          v-model:page="page"
+          :item-count="totalCount"
+          :page-size="pageSize"
+          @update:page="handlePageChange"
+          size="medium"
+        />
       </div>
     </div>
-
   </div>
 </template>
 
@@ -196,7 +264,7 @@ onMounted(fetchPosts)
 }
 
 /* 渐变层绝对定位 */
-.cover-box>div:first-child {
+.cover-box > div:first-child {
   position: absolute;
   top: 0;
   left: 0;
@@ -206,7 +274,7 @@ onMounted(fetchPosts)
 }
 
 /* Hover 效果：图片轻微放大 */
-.video-card:hover .cover-box>div:first-child {
+.video-card:hover .cover-box > div:first-child {
   transform: scale(1.05);
 }
 
