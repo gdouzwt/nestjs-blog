@@ -1,32 +1,37 @@
 <script setup lang="ts">
-import { NConfigProvider, NGlobalStyle, NMessageProvider, NLayout, NLayoutHeader, NLayoutContent, NLayoutFooter } from 'naive-ui'
+import {
+  NConfigProvider,
+  NGlobalStyle,
+  NMessageProvider,
+  NLayout,
+  NLayoutHeader,
+  NLayoutContent,
+  NLayoutFooter,
+} from 'naive-ui';
 </script>
 
 <template>
   <n-config-provider>
     <n-global-style />
     <n-message-provider>
-      
       <n-layout class="layout-container">
-        
         <n-layout-header bordered class="header">
           <div class="nav-content">
-            <h2 class="logo" @click="$router.push('/')">文桃的技术博客</h2>
-            <div class="nav-links">
-               </div>
+            <h2 class="logo" @click="$router.push('/')">文桃的博客</h2>
+            <div class="nav-links"></div>
           </div>
         </n-layout-header>
 
-        <n-layout-content content-style="padding: 24px; max-width: 800px; margin: 0 auto; min-height: 80vh;">
+        <n-layout-content
+          content-style="padding: 24px; max-width: 800px; margin: 0 auto; min-height: 80vh;"
+        >
           <router-view />
         </n-layout-content>
 
         <n-layout-footer bordered class="footer">
           <p>© 2025 ZWT's Blog | Powered by NestJS & Docker</p>
         </n-layout-footer>
-
       </n-layout>
-
     </n-message-provider>
   </n-config-provider>
 </template>
